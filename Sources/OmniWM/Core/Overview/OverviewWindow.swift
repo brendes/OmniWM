@@ -271,7 +271,7 @@ final class OverviewView: NSView {
         if abs(dominantRaw) <= scrollAxisEpsilon {
             return 0
         }
-        return event.isDirectionInvertedFromDevice ? -dominantRaw : dominantRaw
+        return dominantRaw
     }
 
     private func cancelDrag() {

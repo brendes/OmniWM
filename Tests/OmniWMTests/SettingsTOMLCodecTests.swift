@@ -96,8 +96,6 @@ private extension String {
         original.outerGapTop = 9
         original.outerGapBottom = 10
         original.mouseWarpAxis = nil
-        original.quakeTerminalOpacity = nil
-        original.quakeTerminalMonitorMode = nil
         original.niriDefaultColumnWidth = nil
 
         let data = try SettingsTOMLCodec.encode(original)
@@ -123,8 +121,6 @@ private extension String {
         #expect(decoded.outerGapTop == defaults.outerGapTop)
         #expect(decoded.outerGapBottom == defaults.outerGapBottom)
         #expect(decoded.mouseWarpAxis == nil)
-        #expect(decoded.quakeTerminalOpacity == nil)
-        #expect(decoded.quakeTerminalMonitorMode == nil)
         #expect(decoded.niriDefaultColumnWidth == nil)
     }
 
@@ -216,7 +212,6 @@ private extension String {
         #expect(output.contains("[gestures]"))
         #expect(output.contains("[statusBar]"))
         #expect(output.contains("[clipboard]"))
-        #expect(output.contains("[quakeTerminal]"))
         #expect(output.contains("[appearance]"))
         #expect(output.contains("[state]") == false)
         #expect(output.contains("[[hotkeys]]"))
@@ -227,14 +222,6 @@ private extension String {
         #expect(output.contains("borderColorRed") == false)
         #expect(output.contains("workspaceBarAccentColorRed") == false)
         #expect(output.contains("outerGapLeft") == false)
-    }
-
-    @Test func quakeRuntimeStateIsExcludedFromTOML() throws {
-        let data = try SettingsTOMLCodec.encode(SettingsExport.defaults())
-        let output = try #require(String(data: data, encoding: .utf8))
-
-        #expect(output.contains("useCustomFrame") == false)
-        #expect(output.contains("customFrame") == false)
     }
 
     @Test func roundTripsWorkspaceWithMainMonitorAssignment() throws {
@@ -484,6 +471,7 @@ private extension String {
         #expect(decodedEmpty.niriColumnWidthPresets == [])
     }
 
+<<<<<<< HEAD
     @Test func preservesNilOptionalScalarsInQuakeTerminalAndMouseWarp() throws {
         var export = SettingsExport.defaults()
         export.mouseWarpAxis = nil
@@ -500,6 +488,26 @@ private extension String {
     }
 
     @Test func roundTripsClipboardSettings() throws {
+||||||| parent of 256601e (yeet quake terminal phase 1)
+    @Test func preservesNilOptionalScalarsInQuakeTerminalAndMouseWarp() throws {
+        var export = SettingsExport.defaults()
+        export.mouseWarpAxis = nil
+        export.quakeTerminalOpacity = nil
+        export.quakeTerminalMonitorMode = nil
+        export.niriDefaultColumnWidth = nil
+
+        let data = try SettingsTOMLCodec.encode(export)
+        let decoded = try SettingsTOMLCodec.decode(data)
+        #expect(decoded.mouseWarpAxis == nil)
+        #expect(decoded.quakeTerminalOpacity == nil)
+        #expect(decoded.quakeTerminalMonitorMode == nil)
+        #expect(decoded.niriDefaultColumnWidth == nil)
+    }
+
+    @Test func roundTripsClipboardSettingsAndLastMode() throws {
+=======
+    @Test func roundTripsClipboardSettingsAndLastMode() throws {
+>>>>>>> 256601e (yeet quake terminal phase 1)
         var export = SettingsExport.defaults()
         export.clipboardHistoryEnabled = true
         export.clipboardMaxItems = 42

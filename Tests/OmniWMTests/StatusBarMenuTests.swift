@@ -25,14 +25,14 @@ private func makeStatusBarMenuTestDirectory() -> URL {
 
         #expect(lightMenu.appearance?.name == .aqua)
         #expect(try #require(lightMenu.items.first?.view).appearance?.name == .aqua)
-        #expect(try #require(lightMenu.items.dropFirst(3).first?.view).appearance?.name == .aqua)
+        #expect(try #require(lightMenu.items.dropFirst(2).first?.view).appearance?.name == .aqua)
 
         application.appearance = NSAppearance(named: .darkAqua)
         let darkMenu = builder.buildMenu()
 
         #expect(darkMenu.appearance?.name == .darkAqua)
         #expect(try #require(darkMenu.items.first?.view).appearance?.name == .darkAqua)
-        #expect(try #require(darkMenu.items.dropFirst(3).first?.view).appearance?.name == .darkAqua)
+        #expect(try #require(darkMenu.items.dropFirst(2).first?.view).appearance?.name == .darkAqua)
     }
 
     @Test func buildMenuIncludesSettingsFileActions() {
@@ -42,9 +42,8 @@ private func makeStatusBarMenuTestDirectory() -> URL {
         let menu = builder.buildMenu()
         let labels = menu.items.compactMap(\.view).flatMap(textLabels(in:))
 
-        #expect(labels.contains("SETTINGS FILE"))
         #expect(labels.contains("Reveal Settings File"))
-        #expect(labels.contains("Edit Settings File"))
+        #expect(labels.contains("Settings"))
         #expect(labels.allSatisfy { !$0.localizedCaseInsensitiveContains("export") })
         #expect(labels.allSatisfy { !$0.localizedCaseInsensitiveContains("import") })
     }
@@ -63,7 +62,7 @@ private func makeStatusBarMenuTestDirectory() -> URL {
         let menu = builder.buildMenu()
 
         try actionRow(in: menu, labeled: "Reveal Settings File").performActionForTests()
-        try actionRow(in: menu, labeled: "Edit Settings File").performActionForTests()
+        try actionRow(in: menu, labeled: "Settings").performActionForTests()
 
         #expect(performedActions == [.reveal, .open])
     }
@@ -86,47 +85,11 @@ private func makeStatusBarMenuTestDirectory() -> URL {
         #expect(didCheckForUpdates)
     }
 
-    @Test func buildMenuIncludesIPCSectionAndCLIInstallActionWhenEnabled() throws {
-        let root = makeStatusBarMenuTestDirectory()
-        defer { try? FileManager.default.removeItem(at: root) }
-
-        let homeDirectory = root.appendingPathComponent("home", isDirectory: true)
-        let userBin = homeDirectory.appendingPathComponent("bin", isDirectory: true)
-        let appURL = root.appendingPathComponent("OmniWM.app", isDirectory: true)
-        let macOSDirectory = appURL.appendingPathComponent("Contents/MacOS", isDirectory: true)
-        let bundledCLIURL = macOSDirectory.appendingPathComponent("omniwmctl", isDirectory: false)
-        try FileManager.default.createDirectory(at: userBin, withIntermediateDirectories: true)
-        try FileManager.default.createDirectory(at: macOSDirectory, withIntermediateDirectories: true)
-        try Data("#!/bin/sh\nexit 0\n".utf8).write(to: bundledCLIURL)
-        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: bundledCLIURL.path)
-
-        let controller = makeLayoutPlanTestController()
-        let builder = StatusBarMenuBuilder(settings: controller.settings, controller: controller)
-        builder.ipcMenuEnabled = true
-        builder.cliManager = AppCLIManager(
-            environmentProvider: { ["PATH": userBin.path] },
-            bundleURLProvider: { appURL },
-            homeDirectoryURLProvider: { homeDirectory },
-            homebrewLinkURLsProvider: { [] }
-        )
-
-        let menu = builder.buildMenu()
-        let labels = menu.items.compactMap(\.view).flatMap(textLabels(in:))
-
-        #expect(labels.contains("IPC / CLI"))
-        #expect(labels.contains("Enable IPC"))
-        #expect(labels.contains("Install CLI to PATH…"))
-    }
-
-    @Test func revealActionDoesNotPresentPopup() {
+    @Test func revealActionDelegatesAndSwallowsNothing() {
         let controller = makeLayoutPlanTestController()
         let settings = controller.settings
         let builder = StatusBarMenuBuilder(settings: settings, controller: controller)
-        var didPresentAlert = false
         var performedAction: SettingsFileAction?
-        builder.infoAlertPresenter = { _, _ in
-            didPresentAlert = true
-        }
         builder.settingsFileActionPerformer = { action, receivedSettings in
             performedAction = action
             #expect(receivedSettings.settingsFileURL == settings.settingsFileURL)
@@ -136,24 +99,21 @@ private func makeStatusBarMenuTestDirectory() -> URL {
         builder.performSettingsFileAction(.reveal)
 
         #expect(performedAction == .reveal)
-        #expect(didPresentAlert == false)
         #expect(settings.settingsFileURL.lastPathComponent == "settings.toml")
     }
 
-    @Test func openActionFailureDoesNotPresentPopup() {
+    @Test func openActionFailureIsSwallowed() {
         let controller = makeLayoutPlanTestController()
         let builder = StatusBarMenuBuilder(settings: controller.settings, controller: controller)
-        var didPresentAlert = false
-        builder.infoAlertPresenter = { _, _ in
-            didPresentAlert = true
-        }
-        builder.settingsFileActionPerformer = { _, _ in
+        var performedAction: SettingsFileAction?
+        builder.settingsFileActionPerformer = { action, _ in
+            performedAction = action
             throw CocoaError(.fileNoSuchFile)
         }
 
         builder.performSettingsFileAction(.open)
 
-        #expect(didPresentAlert == false)
+        #expect(performedAction == .open)
     }
 
     @Test func statusBarTitleUsesInteractionMonitorWorkspaceAndFocusedApp() {

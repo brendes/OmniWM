@@ -77,15 +77,8 @@ infiniteLoop = false
 maxVisibleColumns = 2
 singleWindowAspectRatio = "none"
 
-[quakeTerminal]
-animationDuration = 0.2
-autoHide = false
-enabled = true
-heightPercent = 50.0
-monitorMode = "focusedWindow"
-opacity = 1.0
-position = "center"
-widthPercent = 50.0
+[state]
+commandPaletteLastMode = "windows"
 
 [statusBar]
 showAppNames = false
@@ -749,10 +742,6 @@ id = "toggleWorkspaceBarVisibility"
 [[hotkeys]]
 binding = "Unassigned"
 id = "toggleHiddenBar"
-
-[[hotkeys]]
-binding = "Hyper+Grave"
-id = "toggleQuakeTerminal"
 
 [[hotkeys]]
 binding = "Hyper+Shift+L"

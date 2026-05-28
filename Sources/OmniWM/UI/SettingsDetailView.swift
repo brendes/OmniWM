@@ -27,18 +27,12 @@ struct SettingsDetailView: View {
             NiriSettingsTab(settings: settings, controller: controller)
         case .dwindle:
             DwindleSettingsTab(settings: settings, controller: controller)
-        case .monitors:
-            MonitorSettingsTab(settings: settings, controller: controller)
         case .workspaces:
             WorkspacesSettingsTab(settings: settings, controller: controller)
         case .borders:
             BorderSettingsTab(settings: settings, controller: controller)
         case .bar:
             WorkspaceBarSettingsTab(settings: settings, controller: controller)
-        case .hotkeys:
-            HotkeySettingsView(settings: settings, controller: controller)
-        case .quakeTerminal:
-            QuakeTerminalSettingsTab(settings: settings, controller: controller)
         }
     }
 }

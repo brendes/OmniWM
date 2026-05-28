@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 private let menuWidth: CGFloat = 280
 
@@ -12,13 +13,8 @@ final class StatusBarMenuBuilder {
     private let settings: SettingsStore
     private let motionPolicy: MotionPolicy
     private weak var controller: WMController?
-    var infoAlertPresenter: (String, String) -> Void
-    var confirmationAlertPresenter: (String, String, String, String) -> Bool
     var settingsFileActionPerformer: (SettingsFileAction, SettingsStore) throws -> SettingsFileStatus
-    var ipcMenuEnabled = false
-    var cliManager: AppCLIManager?
     var checkForUpdatesAction: (() -> Void)?
-    var updateCoordinator: (any AppUpdateCoordinating)?
 
     private var toggleViews: [String: MenuToggleRowView] = [:]
 
@@ -26,25 +22,6 @@ final class StatusBarMenuBuilder {
         self.settings = settings
         motionPolicy = controller.motionPolicy
         self.controller = controller
-        infoAlertPresenter = { title, message in
-            let alert = NSAlert()
-            alert.alertStyle = .informational
-            alert.messageText = title
-            alert.informativeText = message
-            alert.addButton(withTitle: "OK")
-            NSApplication.shared.activate(ignoringOtherApps: true)
-            _ = alert.runModal()
-        }
-        confirmationAlertPresenter = { title, message, confirmTitle, cancelTitle in
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText = title
-            alert.informativeText = message
-            alert.addButton(withTitle: confirmTitle)
-            alert.addButton(withTitle: cancelTitle)
-            NSApplication.shared.activate(ignoringOtherApps: true)
-            return alert.runModal() == .alertFirstButtonReturn
-        }
         settingsFileActionPerformer = { action, settings in
             try SettingsFileWorkflow.perform(
                 action,
@@ -66,28 +43,11 @@ final class StatusBarMenuBuilder {
 
         menu.addItem(createDivider())
 
-        menu.addItem(createSectionLabel("CONTROLS"))
-        addControlsSection(to: menu)
+        addKeepAwakeRow(to: menu)
 
         menu.addItem(createDivider())
 
-        if ipcMenuEnabled {
-            menu.addItem(createSectionLabel("IPC / CLI"))
-            addIPCSection(to: menu)
-            menu.addItem(createDivider())
-        }
-
-        menu.addItem(createSectionLabel("SETTINGS"))
-        addSettingsSection(to: menu)
-
-        menu.addItem(createDivider())
-
-        menu.addItem(createSectionLabel("LINKS"))
-        addLinksSection(to: menu)
-
-        menu.addItem(createDivider())
-
-        addSponsorsSection(to: menu)
+        addActionRows(to: menu)
 
         menu.addItem(createDivider())
 
@@ -97,13 +57,7 @@ final class StatusBarMenuBuilder {
     }
 
     func updateToggles() {
-        toggleViews["focusFollowsMouse"]?.isOn = settings.focusFollowsMouse
-        toggleViews["focusFollowsWindowToMonitor"]?.isOn = settings.focusFollowsWindowToMonitor
-        toggleViews["moveMouseToFocusedWindow"]?.isOn = settings.moveMouseToFocusedWindow
-        toggleViews["bordersEnabled"]?.isOn = settings.bordersEnabled
-        toggleViews["workspaceBarEnabled"]?.isOn = settings.workspaceBarEnabled
         toggleViews["preventSleepEnabled"]?.isOn = settings.preventSleepEnabled
-        toggleViews["ipcEnabled"]?.isOn = settings.ipcEnabled
     }
 
     private func createHeaderView() -> NSView {
@@ -116,82 +70,7 @@ final class StatusBarMenuBuilder {
         return item
     }
 
-    private func createSectionLabel(_ text: String) -> NSMenuItem {
-        let item = NSMenuItem()
-        item.view = MenuSectionLabelView(text: text)
-        return item
-    }
-
-    private func addControlsSection(to menu: NSMenu) {
-        let focusToggle = MenuToggleRowView(
-            icon: "cursorarrow.motionlines",
-            label: "Focus Follows Mouse",
-            isOn: settings.focusFollowsMouse,
-            motionPolicy: motionPolicy
-        ) { [weak self] newValue in
-            self?.settings.focusFollowsMouse = newValue
-            self?.controller?.setFocusFollowsMouse(newValue)
-        }
-        toggleViews["focusFollowsMouse"] = focusToggle
-        let focusItem = NSMenuItem()
-        focusItem.view = focusToggle
-        menu.addItem(focusItem)
-
-        let followMoveToggle = MenuToggleRowView(
-            icon: "arrow.right.square",
-            label: "Follow Window to Workspace",
-            isOn: settings.focusFollowsWindowToMonitor,
-            motionPolicy: motionPolicy
-        ) { [weak self] newValue in
-            self?.settings.focusFollowsWindowToMonitor = newValue
-        }
-        toggleViews["focusFollowsWindowToMonitor"] = followMoveToggle
-        let followMoveItem = NSMenuItem()
-        followMoveItem.view = followMoveToggle
-        menu.addItem(followMoveItem)
-
-        let mouseToFocusedToggle = MenuToggleRowView(
-            icon: "arrow.up.left.and.down.right.magnifyingglass",
-            label: "Mouse to Focused",
-            isOn: settings.moveMouseToFocusedWindow,
-            motionPolicy: motionPolicy
-        ) { [weak self] newValue in
-            self?.settings.moveMouseToFocusedWindow = newValue
-            self?.controller?.setMoveMouseToFocusedWindow(newValue)
-        }
-        toggleViews["moveMouseToFocusedWindow"] = mouseToFocusedToggle
-        let mouseItem = NSMenuItem()
-        mouseItem.view = mouseToFocusedToggle
-        menu.addItem(mouseItem)
-
-        let bordersToggle = MenuToggleRowView(
-            icon: "square.dashed",
-            label: "Window Borders",
-            isOn: settings.bordersEnabled,
-            motionPolicy: motionPolicy
-        ) { [weak self] newValue in
-            self?.settings.bordersEnabled = newValue
-            self?.controller?.setBordersEnabled(newValue)
-        }
-        toggleViews["bordersEnabled"] = bordersToggle
-        let bordersItem = NSMenuItem()
-        bordersItem.view = bordersToggle
-        menu.addItem(bordersItem)
-
-        let workspaceBarToggle = MenuToggleRowView(
-            icon: "menubar.rectangle",
-            label: "Workspace Bar",
-            isOn: settings.workspaceBarEnabled,
-            motionPolicy: motionPolicy
-        ) { [weak self] newValue in
-            self?.settings.workspaceBarEnabled = newValue
-            self?.controller?.setWorkspaceBarEnabled(newValue)
-        }
-        toggleViews["workspaceBarEnabled"] = workspaceBarToggle
-        let workspaceItem = NSMenuItem()
-        workspaceItem.view = workspaceBarToggle
-        menu.addItem(workspaceItem)
-
+    private func addKeepAwakeRow(to menu: NSMenu) {
         let keepAwakeToggle = MenuToggleRowView(
             icon: "moon.zzz",
             label: "Keep Awake",
@@ -207,55 +86,7 @@ final class StatusBarMenuBuilder {
         menu.addItem(keepAwakeItem)
     }
 
-    private func addIPCSection(to menu: NSMenu) {
-        let ipcToggle = MenuToggleRowView(
-            icon: "point.3.connected.trianglepath.dotted",
-            label: "Enable IPC",
-            isOn: settings.ipcEnabled,
-            motionPolicy: motionPolicy
-        ) { [weak self] newValue in
-            self?.settings.ipcEnabled = newValue
-        }
-        toggleViews["ipcEnabled"] = ipcToggle
-        let ipcItem = NSMenuItem()
-        ipcItem.view = ipcToggle
-        menu.addItem(ipcItem)
-
-        guard let cliManager else { return }
-
-        let item = NSMenuItem()
-        switch cliManager.exposureStatus() {
-        case .homebrewManaged:
-            item.view = MenuInfoRowView(
-                icon: "checkmark.circle.fill",
-                label: "CLI available via Homebrew"
-            )
-        case .appManaged:
-            item.view = MenuActionRowView(
-                icon: "trash",
-                label: "Remove CLI from PATH…",
-                motionPolicy: motionPolicy
-            ) { [weak self] in
-                self?.removeCLIFromPath()
-            }
-        case .notInstalled:
-            item.view = MenuActionRowView(
-                icon: "terminal",
-                label: "Install CLI to PATH…",
-                motionPolicy: motionPolicy
-            ) { [weak self] in
-                self?.installCLIIntoPath()
-            }
-        case .conflict:
-            item.view = MenuInfoRowView(
-                icon: "exclamationmark.triangle.fill",
-                label: "CLI path is already occupied"
-            )
-        }
-        menu.addItem(item)
-    }
-
-    private func addSettingsSection(to menu: NSMenu) {
+    private func addActionRows(to menu: NSMenu) {
         if checkForUpdatesAction != nil {
             let updatesRow = MenuActionRowView(
                 icon: "arrow.down.circle",
@@ -285,21 +116,13 @@ final class StatusBarMenuBuilder {
         let settingsRow = MenuActionRowView(
             icon: "gearshape",
             label: "Settings",
-            showChevron: true,
             motionPolicy: motionPolicy
         ) { [weak self] in
-            guard let self, let controller = self.controller else { return }
-            SettingsWindowController.shared.show(
-                settings: self.settings,
-                controller: controller,
-                updateCoordinator: self.updateCoordinator
-            )
+            self?.performSettingsFileAction(.open)
         }
         let settingsItem = NSMenuItem()
         settingsItem.view = settingsRow
         menu.addItem(settingsItem)
-
-        menu.addItem(createSectionLabel("SETTINGS FILE"))
 
         let revealSettingsFileRow = MenuActionRowView(
             icon: "folder",
@@ -311,17 +134,20 @@ final class StatusBarMenuBuilder {
         let revealSettingsFileItem = NSMenuItem()
         revealSettingsFileItem.view = revealSettingsFileRow
         menu.addItem(revealSettingsFileItem)
+    }
 
-        let openSettingsFileRow = MenuActionRowView(
-            icon: "pencil",
-            label: "Edit Settings File",
+    private func addQuitSection(to menu: NSMenu) {
+        let quitRow = MenuActionRowView(
+            icon: "power",
+            label: "Quit OmniWM",
+            isDestructive: true,
             motionPolicy: motionPolicy
-        ) { [weak self] in
-            self?.performSettingsFileAction(.open)
+        ) {
+            NSApplication.shared.terminate(nil)
         }
-        let openSettingsFileItem = NSMenuItem()
-        openSettingsFileItem.view = openSettingsFileRow
-        menu.addItem(openSettingsFileItem)
+        let quitItem = NSMenuItem()
+        quitItem.view = quitRow
+        menu.addItem(quitItem)
     }
 
     func performCheckForUpdatesAction() {
@@ -337,151 +163,6 @@ final class StatusBarMenuBuilder {
         } catch {
             NSLog("OmniWM settings file action failed: \(error.localizedDescription)")
         }
-    }
-
-    private func presentInfoAlert(title: String, message: String) {
-        infoAlertPresenter(title, message)
-    }
-
-    private func installCLIIntoPath() {
-        guard let cliManager else { return }
-        let status = cliManager.exposureStatus()
-        guard case let .notInstalled(linkURL, directoryOnPath) = status else {
-            controller?.statusBarController?.rebuildMenu()
-            return
-        }
-
-        let directoryURL = linkURL.deletingLastPathComponent()
-        var message =
-            "OmniWM will create a symlink at \(linkURL.path) pointing to its bundled omniwmctl binary."
-        if !directoryOnPath {
-            message += "\n\n\(directoryURL.path) is not currently in your PATH, so Terminal may not find `omniwmctl` until you add that directory."
-        }
-
-        guard confirmationAlertPresenter(
-            "Install CLI to PATH?",
-            message,
-            "Install",
-            "Cancel"
-        ) else {
-            return
-        }
-
-        do {
-            let result = try cliManager.installCLIToPATH()
-            controller?.statusBarController?.rebuildMenu()
-            presentInfoAlert(title: "CLI Installed", message: installResultMessage(result))
-        } catch {
-            presentInfoAlert(title: "CLI Install Failed", message: error.localizedDescription)
-        }
-    }
-
-    private func removeCLIFromPath() {
-        guard let cliManager else { return }
-        guard confirmationAlertPresenter(
-            "Remove CLI from PATH?",
-            "OmniWM will remove the symlink it created for `omniwmctl`.",
-            "Remove",
-            "Cancel"
-        ) else {
-            return
-        }
-
-        do {
-            let result = try cliManager.removeInstalledCLI()
-            controller?.statusBarController?.rebuildMenu()
-            presentInfoAlert(title: "CLI Link Updated", message: installResultMessage(result))
-        } catch {
-            presentInfoAlert(title: "CLI Removal Failed", message: error.localizedDescription)
-        }
-    }
-
-    private func installResultMessage(_ result: AppCLIInstallResult) -> String {
-        switch result {
-        case let .installed(linkURL, directoryOnPath),
-             let .alreadyInstalled(linkURL, directoryOnPath):
-            let state = directoryOnPath
-                ? "You can now run `omniwmctl` from Terminal."
-                : "Add \(linkURL.deletingLastPathComponent().path) to PATH before using `omniwmctl` in Terminal."
-            return "\(linkURL.path)\n\n\(state)"
-        case let .removed(linkURL):
-            return "Removed OmniWM's CLI symlink at \(linkURL.path)."
-        case let .notInstalled(linkURL):
-            return "No OmniWM-managed CLI symlink was found at \(linkURL.path)."
-        case let .homebrewManaged(linkURL):
-            return "Homebrew already manages `omniwmctl` at \(linkURL.path)."
-        }
-    }
-
-    private func addLinksSection(to menu: NSMenu) {
-        let githubRow = MenuActionRowView(
-            icon: "link",
-            label: "GitHub",
-            isExternal: true,
-            motionPolicy: motionPolicy
-        ) {
-            if let url = URL(string: "https://github.com/BarutSRB/OmniWM") {
-                NSWorkspace.shared.open(url)
-            }
-        }
-        let githubItem = NSMenuItem()
-        githubItem.view = githubRow
-        menu.addItem(githubItem)
-
-        let sponsorGithubRow = MenuActionRowView(
-            icon: "heart",
-            label: "Sponsor on GitHub",
-            isExternal: true,
-            motionPolicy: motionPolicy
-        ) {
-            if let url = URL(string: "https://github.com/sponsors/BarutSRB") {
-                NSWorkspace.shared.open(url)
-            }
-        }
-        let sponsorGithubItem = NSMenuItem()
-        sponsorGithubItem.view = sponsorGithubRow
-        menu.addItem(sponsorGithubItem)
-
-        let sponsorPaypalRow = MenuActionRowView(
-            icon: "heart",
-            label: "Sponsor on PayPal",
-            isExternal: true,
-            motionPolicy: motionPolicy
-        ) {
-            if let url = URL(string: "https://paypal.me/beacon2024") {
-                NSWorkspace.shared.open(url)
-            }
-        }
-        let sponsorPaypalItem = NSMenuItem()
-        sponsorPaypalItem.view = sponsorPaypalRow
-        menu.addItem(sponsorPaypalItem)
-    }
-
-    private func addSponsorsSection(to menu: NSMenu) {
-        let sponsorsRow = MenuActionRowView(
-            icon: "sparkles",
-            label: "Omni Sponsors",
-            motionPolicy: motionPolicy
-        ) { [weak self] in
-            self?.controller?.openSponsorsWindow()
-        }
-        let sponsorsItem = NSMenuItem()
-        sponsorsItem.view = sponsorsRow
-        menu.addItem(sponsorsItem)
-    }
-
-    private func addQuitSection(to menu: NSMenu) {
-        let quitRow = MenuActionRowView(
-            icon: "power",
-            label: "Quit OmniWM",
-            isDestructive: true,
-            motionPolicy: motionPolicy
-        ) {
-            NSApplication.shared.terminate(nil)
-        }
-        let quitItem = NSMenuItem()
-        quitItem.view = quitRow
-        menu.addItem(quitItem)
     }
 }
 
@@ -536,24 +217,6 @@ final class MenuHeaderView: NSView {
     }
 }
 
-final class MenuSectionLabelView: NSView {
-    init(text: String) {
-        super.init(frame: NSRect(x: 0, y: 0, width: menuWidth, height: 24))
-        applyCurrentAppAppearance(to: self)
-
-        let label = NSTextField(labelWithString: text)
-        label.font = .systemFont(ofSize: 10, weight: .medium)
-        label.textColor = .tertiaryLabelColor
-        label.frame = NSRect(x: 14, y: 4, width: menuWidth - 28, height: 12)
-        addSubview(label)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
 final class MenuDividerView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: NSRect(x: 0, y: 0, width: menuWidth, height: 9))
@@ -567,149 +230,6 @@ final class MenuDividerView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
-    }
-}
-
-final class MenuInfoRowView: NSView {
-    init(icon: String, label: String) {
-        super.init(frame: NSRect(x: 0, y: 0, width: menuWidth, height: 28))
-        applyCurrentAppAppearance(to: self)
-
-        if let iconImage = NSImage(systemSymbolName: icon, accessibilityDescription: nil) {
-            let iconView = NSImageView(frame: NSRect(x: 12, y: 6, width: 16, height: 16))
-            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
-            iconView.image = iconImage.withSymbolConfiguration(config)
-            iconView.contentTintColor = .tertiaryLabelColor
-            addSubview(iconView)
-        }
-
-        let labelField = NSTextField(labelWithString: label)
-        labelField.font = .systemFont(ofSize: 13)
-        labelField.textColor = .secondaryLabelColor
-        labelField.frame = NSRect(x: 38, y: 5, width: menuWidth - 52, height: 18)
-        addSubview(labelField)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-@MainActor
-final class MenuToggleSwitchView: NSView {
-    private let motionPolicy: MotionPolicy
-
-    var isOn: Bool {
-        didSet {
-            guard oldValue != isOn else { return }
-            updateAppearance(animated: true)
-        }
-    }
-
-    var onToggle: ((Bool) -> Void)?
-
-    private let trackLayer = CALayer()
-    private let thumbLayer = CALayer()
-    private var trackingAreaRef: NSTrackingArea?
-    private var isHovered: Bool = false
-
-    override var isFlipped: Bool {
-        true
-    }
-
-    init(isOn: Bool, motionPolicy: MotionPolicy) {
-        self.isOn = isOn
-        self.motionPolicy = motionPolicy
-        super.init(frame: NSRect(x: 0, y: 0, width: 42, height: 22))
-        applyCurrentAppAppearance(to: self)
-        wantsLayer = true
-        layer?.backgroundColor = NSColor.clear.cgColor
-
-        trackLayer.cornerCurve = .continuous
-        thumbLayer.cornerCurve = .continuous
-        thumbLayer.backgroundColor = NSColor.white.cgColor
-        thumbLayer.shadowColor = NSColor.black.withAlphaComponent(0.18).cgColor
-        thumbLayer.shadowOpacity = 1
-        thumbLayer.shadowRadius = 1.8
-        thumbLayer.shadowOffset = CGSize(width: 0, height: 0.6)
-
-        layer?.addSublayer(trackLayer)
-        layer?.addSublayer(thumbLayer)
-        updateAppearance(animated: false)
-        updateTrackingAreas()
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func layout() {
-        super.layout()
-        updateAppearance(animated: false)
-    }
-
-    override func updateTrackingAreas() {
-        if let existing = trackingAreaRef {
-            removeTrackingArea(existing)
-        }
-        let area = NSTrackingArea(
-            rect: bounds,
-            options: [.activeAlways, .inVisibleRect, .mouseEnteredAndExited, .mouseMoved],
-            owner: self,
-            userInfo: nil
-        )
-        addTrackingArea(area)
-        trackingAreaRef = area
-    }
-
-    override func mouseEntered(with event: NSEvent) {
-        isHovered = true
-        updateAppearance(animated: true)
-    }
-
-    override func mouseMoved(with event: NSEvent) {
-        let point = convert(event.locationInWindow, from: nil)
-        let hoveredNow = bounds.contains(point)
-        guard hoveredNow != isHovered else { return }
-        isHovered = hoveredNow
-        updateAppearance(animated: true)
-    }
-
-    override func mouseExited(with event: NSEvent) {
-        isHovered = false
-        updateAppearance(animated: true)
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        isOn.toggle()
-        onToggle?(isOn)
-    }
-
-    private func updateAppearance(animated: Bool) {
-        let shouldAnimate = animated && motionPolicy.animationsEnabled
-        let inset: CGFloat = 2
-        let thumbSize = max(0, bounds.height - inset * 2)
-        let thumbX = isOn
-            ? bounds.width - inset - thumbSize
-            : inset
-
-        let onColor = NSColor.systemGreen.withAlphaComponent(isHovered ? 1.0 : 0.95).cgColor
-        let offColor = NSColor(white: isHovered ? 0.32 : 0.26, alpha: 1.0).cgColor
-        let targetTrack = isOn ? onColor : offColor
-
-        CATransaction.begin()
-        CATransaction.setDisableActions(!shouldAnimate)
-        CATransaction.setAnimationDuration(shouldAnimate ? 0.14 : 0)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeOut))
-        trackLayer.frame = bounds
-        trackLayer.cornerRadius = bounds.height / 2
-        trackLayer.backgroundColor = targetTrack
-
-        thumbLayer.frame = NSRect(x: thumbX, y: inset, width: thumbSize, height: thumbSize)
-        thumbLayer.cornerRadius = thumbSize / 2
-        CATransaction.commit()
     }
 }
 
@@ -828,6 +348,123 @@ final class MenuToggleRowView: NSView {
 
         iconView?.contentTintColor = hovered ? .white : .secondaryLabelColor
         labelField?.textColor = hovered ? .white : .labelColor
+    }
+}
+
+@MainActor
+final class MenuToggleSwitchView: NSView {
+    private let motionPolicy: MotionPolicy
+
+    var isOn: Bool {
+        didSet {
+            guard oldValue != isOn else { return }
+            updateAppearance(animated: true)
+        }
+    }
+
+    var onToggle: ((Bool) -> Void)?
+
+    private let trackLayer = CALayer()
+    private let thumbLayer = CALayer()
+    private var trackingAreaRef: NSTrackingArea?
+    private var isHovered: Bool = false
+
+    override var isFlipped: Bool {
+        true
+    }
+
+    init(isOn: Bool, motionPolicy: MotionPolicy) {
+        self.isOn = isOn
+        self.motionPolicy = motionPolicy
+        super.init(frame: NSRect(x: 0, y: 0, width: 42, height: 22))
+        applyCurrentAppAppearance(to: self)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.clear.cgColor
+
+        trackLayer.cornerCurve = .continuous
+        thumbLayer.cornerCurve = .continuous
+        thumbLayer.backgroundColor = NSColor.white.cgColor
+        thumbLayer.shadowColor = NSColor.black.withAlphaComponent(0.18).cgColor
+        thumbLayer.shadowOpacity = 1
+        thumbLayer.shadowRadius = 1.8
+        thumbLayer.shadowOffset = CGSize(width: 0, height: 0.6)
+
+        layer?.addSublayer(trackLayer)
+        layer?.addSublayer(thumbLayer)
+        updateAppearance(animated: false)
+        updateTrackingAreas()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layout() {
+        super.layout()
+        updateAppearance(animated: false)
+    }
+
+    override func updateTrackingAreas() {
+        if let existing = trackingAreaRef {
+            removeTrackingArea(existing)
+        }
+        let area = NSTrackingArea(
+            rect: bounds,
+            options: [.activeAlways, .inVisibleRect, .mouseEnteredAndExited, .mouseMoved],
+            owner: self,
+            userInfo: nil
+        )
+        addTrackingArea(area)
+        trackingAreaRef = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        isHovered = true
+        updateAppearance(animated: true)
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        let point = convert(event.locationInWindow, from: nil)
+        let hoveredNow = bounds.contains(point)
+        guard hoveredNow != isHovered else { return }
+        isHovered = hoveredNow
+        updateAppearance(animated: true)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        isHovered = false
+        updateAppearance(animated: true)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        isOn.toggle()
+        onToggle?(isOn)
+    }
+
+    private func updateAppearance(animated: Bool) {
+        let shouldAnimate = animated && motionPolicy.animationsEnabled
+        let inset: CGFloat = 2
+        let thumbSize = max(0, bounds.height - inset * 2)
+        let thumbX = isOn
+            ? bounds.width - inset - thumbSize
+            : inset
+
+        let onColor = NSColor.systemGreen.withAlphaComponent(isHovered ? 1.0 : 0.95).cgColor
+        let offColor = NSColor(white: isHovered ? 0.32 : 0.26, alpha: 1.0).cgColor
+        let targetTrack = isOn ? onColor : offColor
+
+        CATransaction.begin()
+        CATransaction.setDisableActions(!shouldAnimate)
+        CATransaction.setAnimationDuration(shouldAnimate ? 0.14 : 0)
+        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(name: .easeOut))
+        trackLayer.frame = bounds
+        trackLayer.cornerRadius = bounds.height / 2
+        trackLayer.backgroundColor = targetTrack
+
+        thumbLayer.frame = NSRect(x: thumbX, y: inset, width: thumbSize, height: thumbSize)
+        thumbLayer.cornerRadius = thumbSize / 2
+        CATransaction.commit()
     }
 }
 

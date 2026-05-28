@@ -50,6 +50,7 @@ struct OmniWMStoragePathsTests {
     }
 }
 
+<<<<<<< HEAD
 @MainActor struct QuakeTerminalSettingsValidationTests {
     @Test func normalizesQuakeTerminalPercentagesOnAssignment() {
         let settings = SettingsStore(defaults: makeTestDefaults())
@@ -402,12 +403,24 @@ struct SettingsExportTests {
         #expect(defaults.clipboardMaxItems == 200)
         #expect(defaults.clipboardMaxItemBytes == 8_388_608)
         #expect(defaults.clipboardMaxTotalBytes == 67_108_864)
+<<<<<<< HEAD
         #expect(defaults.quakeTerminalEnabled == true)
         #expect(defaults.quakeTerminalPosition == QuakeTerminalPosition.center.rawValue)
         #expect(defaults.quakeTerminalWidthPercent == 50.0)
         #expect(defaults.quakeTerminalHeightPercent == 50.0)
         #expect(defaults.quakeTerminalAutoHide == false)
         #expect(defaults.quakeTerminalMonitorMode == QuakeTerminalMonitorMode.focusedWindow.rawValue)
+||||||| parent of 256601e (yeet quake terminal phase 1)
+        #expect(defaults.quakeTerminalEnabled == true)
+        #expect(defaults.quakeTerminalPosition == QuakeTerminalPosition.center.rawValue)
+        #expect(defaults.quakeTerminalWidthPercent == 50.0)
+        #expect(defaults.quakeTerminalHeightPercent == 50.0)
+        #expect(defaults.quakeTerminalAutoHide == false)
+        #expect(defaults.quakeTerminalMonitorMode == QuakeTerminalMonitorMode.focusedWindow.rawValue)
+        #expect(defaults.quakeTerminalUseCustomFrame == false)
+        #expect(defaults.quakeTerminalCustomFrame == nil)
+=======
+>>>>>>> 256601e (yeet quake terminal phase 1)
         #expect(defaults.appearanceMode == AppearanceMode.dark.rawValue)
     }
 }
@@ -834,6 +847,7 @@ struct HotkeySurfaceTests {
         settings.clipboardMaxItems = 33
         settings.clipboardMaxItemBytes = 4096
         settings.clipboardMaxTotalBytes = 8192
+<<<<<<< HEAD
         settings.quakeTerminalEnabled = true
         settings.quakeTerminalPosition = .bottom
         settings.quakeTerminalWidthPercent = 80
@@ -842,6 +856,19 @@ struct HotkeySurfaceTests {
         settings.quakeTerminalAutoHide = false
         settings.quakeTerminalOpacity = 0.75
         settings.quakeTerminalMonitorMode = .focusedWindow
+||||||| parent of 256601e (yeet quake terminal phase 1)
+        settings.quakeTerminalEnabled = true
+        settings.quakeTerminalPosition = .bottom
+        settings.quakeTerminalWidthPercent = 80
+        settings.quakeTerminalHeightPercent = 55
+        settings.quakeTerminalAnimationDuration = 0.4
+        settings.quakeTerminalAutoHide = false
+        settings.quakeTerminalOpacity = 0.75
+        settings.quakeTerminalMonitorMode = .focusedWindow
+        settings.quakeTerminalUseCustomFrame = true
+        settings.quakeTerminalCustomFrame = CGRect(x: 10, y: 20, width: 1200, height: 700)
+=======
+>>>>>>> 256601e (yeet quake terminal phase 1)
         settings.flushNow()
 
         let reloaded = SettingsStore(defaults: defaults)
@@ -857,6 +884,7 @@ struct HotkeySurfaceTests {
         #expect(reloaded.clipboardMaxItems == 33)
         #expect(reloaded.clipboardMaxItemBytes == 4096)
         #expect(reloaded.clipboardMaxTotalBytes == 8192)
+<<<<<<< HEAD
         #expect(reloaded.quakeTerminalEnabled == true)
         #expect(reloaded.quakeTerminalPosition == .bottom)
         #expect(reloaded.quakeTerminalWidthPercent == 80)
@@ -865,6 +893,19 @@ struct HotkeySurfaceTests {
         #expect(reloaded.quakeTerminalAutoHide == false)
         #expect(reloaded.quakeTerminalOpacity == 0.75)
         #expect(reloaded.quakeTerminalMonitorMode == .focusedWindow)
+||||||| parent of 256601e (yeet quake terminal phase 1)
+        #expect(reloaded.quakeTerminalEnabled == true)
+        #expect(reloaded.quakeTerminalPosition == .bottom)
+        #expect(reloaded.quakeTerminalWidthPercent == 80)
+        #expect(reloaded.quakeTerminalHeightPercent == 55)
+        #expect(reloaded.quakeTerminalAnimationDuration == 0.4)
+        #expect(reloaded.quakeTerminalAutoHide == false)
+        #expect(reloaded.quakeTerminalOpacity == 0.75)
+        #expect(reloaded.quakeTerminalMonitorMode == .focusedWindow)
+        #expect(reloaded.quakeTerminalUseCustomFrame == true)
+        #expect(reloaded.quakeTerminalCustomFrame == CGRect(x: 10, y: 20, width: 1200, height: 700))
+=======
+>>>>>>> 256601e (yeet quake terminal phase 1)
     }
 
     @Test func tomlSettingsFileRoundTripsMonitorOverridesAndAppRules() {
@@ -1099,14 +1140,6 @@ struct HotkeySurfaceTests {
         #expect(settings.clipboardMaxItemBytes == 8_388_608)
         #expect(settings.clipboardMaxTotalBytes == 67_108_864)
         #expect(settings.hiddenBarIsCollapsed == RuntimeStateStore.defaultHiddenBarIsCollapsed)
-        #expect(settings.quakeTerminalEnabled == true)
-        #expect(settings.quakeTerminalPosition == .center)
-        #expect(settings.quakeTerminalWidthPercent == 50.0)
-        #expect(settings.quakeTerminalHeightPercent == 50.0)
-        #expect(settings.quakeTerminalAutoHide == false)
-        #expect(settings.quakeTerminalMonitorMode == .focusedWindow)
-        #expect(settings.quakeTerminalUseCustomFrame == false)
-        #expect(settings.quakeTerminalCustomFrame == nil)
         #expect(settings.appearanceMode == .dark)
     }
 
@@ -1142,8 +1175,6 @@ struct HotkeySurfaceTests {
         #expect(settings.hiddenBarIsCollapsed == RuntimeStateStore.defaultHiddenBarIsCollapsed)
         #expect(settings.updateChecksEnabled == exportDefaults.updateChecksEnabled)
         #expect(settings.ipcEnabled == exportDefaults.ipcEnabled)
-        #expect(settings.quakeTerminalPosition.rawValue == exportDefaults.quakeTerminalPosition)
-        #expect(settings.quakeTerminalMonitorMode.rawValue == exportDefaults.quakeTerminalMonitorMode)
         #expect(settings.appearanceMode.rawValue == exportDefaults.appearanceMode)
     }
 
@@ -1367,8 +1398,7 @@ struct SettingsSectionTests {
             "workspaces",
             "borders",
             "bar",
-            "hotkeys",
-            "quakeTerminal"
+            "hotkeys"
         ])
     }
 }

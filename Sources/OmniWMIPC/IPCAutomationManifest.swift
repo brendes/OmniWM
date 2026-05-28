@@ -833,11 +833,6 @@ public enum IPCAutomationManifest {
         ),
         command(["toggle-hidden-bar"], name: .toggleHiddenBar, summary: "Toggle the hidden bar surface."),
         command(
-            ["toggle-quake-terminal"],
-            name: .toggleQuakeTerminal,
-            summary: "Toggle the configured Quake terminal."
-        ),
-        command(
             ["toggle-workspace-layout"],
             name: .toggleWorkspaceLayout,
             summary: "Toggle the current workspace between Niri and Dwindle."
