@@ -8,7 +8,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case workspaces
     case borders
     case bar
-    case hotkeys
 
     var id: String {
         rawValue
@@ -23,7 +22,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .workspaces: "Workspaces"
         case .borders: "Borders"
         case .bar: "Workspace Bar"
-        case .hotkeys: "Hotkeys"
         }
     }
 
@@ -36,7 +34,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .workspaces: "rectangle.3.group"
         case .borders: "square.dashed"
         case .bar: "menubar.rectangle"
-        case .hotkeys: "keyboard"
         }
     }
 }
@@ -45,7 +42,6 @@ enum SettingsSectionGroup: String, CaseIterable, Identifiable {
     case basics = "Basics"
     case layouts = "Layouts"
     case workspace = "Workspace"
-    case input = "Input"
 
     var id: String {
         rawValue
@@ -59,8 +55,6 @@ enum SettingsSectionGroup: String, CaseIterable, Identifiable {
             [.niri, .dwindle, .monitors]
         case .workspace:
             [.workspaces, .borders, .bar]
-        case .input:
-            [.hotkeys]
         }
     }
 }

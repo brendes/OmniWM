@@ -35,8 +35,6 @@ struct SettingsDetailView: View {
             BorderSettingsTab(settings: settings, controller: controller)
         case .bar:
             WorkspaceBarSettingsTab(settings: settings, controller: controller)
-        case .hotkeys:
-            HotkeySettingsView(settings: settings, controller: controller)
         }
     }
 }
