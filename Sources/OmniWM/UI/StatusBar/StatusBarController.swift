@@ -11,7 +11,6 @@ final class StatusBarController: NSObject {
 
     private let hiddenBarController: HiddenBarController
     private let settings: SettingsStore
-    private let cliManager: AppCLIManager?
     private let updateCoordinator: (any AppUpdateCoordinating)?
     private let statusItemDefaults: UserDefaults
     private weak var controller: WMController?
@@ -20,13 +19,11 @@ final class StatusBarController: NSObject {
         settings: SettingsStore,
         controller: WMController,
         hiddenBarController: HiddenBarController,
-        cliManager: AppCLIManager? = nil,
         updateCoordinator: (any AppUpdateCoordinating)? = nil,
         statusItemDefaults: UserDefaults = .standard
     ) {
         self.hiddenBarController = hiddenBarController
         self.settings = settings
-        self.cliManager = cliManager
         self.updateCoordinator = updateCoordinator
         self.statusItemDefaults = statusItemDefaults
         self.controller = controller
@@ -60,13 +57,11 @@ final class StatusBarController: NSObject {
         button.sendAction(on: [.leftMouseUp, .rightMouseUp])
 
         let menuBuilder = StatusBarMenuBuilder(settings: settings, controller: controller)
-        menuBuilder.ipcMenuEnabled = cliManager != nil
-        menuBuilder.cliManager = cliManager
-        menuBuilder.updateCoordinator = updateCoordinator
         menuBuilder.checkForUpdatesAction = { [weak self] in
             self?.updateCoordinator?.checkForUpdatesManually()
         }
         self.menuBuilder = menuBuilder
+
         rebuildMenu()
 
         hiddenBarController.bind(

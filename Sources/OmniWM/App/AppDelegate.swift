@@ -17,7 +17,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var statusBarController: StatusBarController?
     private var ipcServer: IPCServerLifecycle?
-    private var cliManager: AppCLIManager?
     private var updateCoordinator: (any AppUpdateCoordinating)?
     private var runtimeStateStore: RuntimeStateStore?
 
@@ -65,10 +64,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             hiddenBarController: hiddenBarController,
         )
         controller.applyPersistedSettings(settings)
-        let cliManager = AppCLIManager()
         let updateCoordinator = Self.updateCoordinatorFactoryForTests?(settings, controller, runtimeState)
             ?? UpdateCoordinator(settings: settings, runtimeState: runtimeState)
-        self.cliManager = cliManager
         self.updateCoordinator = updateCoordinator
 
         AppDelegate.sharedBootstrap?.settings = settings
@@ -79,7 +76,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settings: settings,
             controller: controller,
             hiddenBarController: hiddenBarController,
-            cliManager: cliManager,
             updateCoordinator: updateCoordinator
         )
         controller.statusBarController = statusBarController
