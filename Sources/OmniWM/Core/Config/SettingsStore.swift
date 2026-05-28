@@ -362,86 +362,6 @@ final class SettingsStore {
         didSet { runtimeState.hiddenBarIsCollapsed = hiddenBarIsCollapsed }
     }
 
-    var quakeTerminalEnabled = SettingsStore.defaultExport.quakeTerminalEnabled {
-        didSet { scheduleSave() }
-    }
-
-    var quakeTerminalPosition = QuakeTerminalPosition(
-        rawValue: SettingsStore.defaultExport.quakeTerminalPosition
-    ) ?? .center {
-        didSet { scheduleSave() }
-    }
-
-    var quakeTerminalWidthPercent = SettingsStore.defaultExport.quakeTerminalWidthPercent {
-        didSet {
-            let normalized = QuakeTerminalGeometryPolicy.normalizedDimensionPercent(quakeTerminalWidthPercent)
-            if normalized != quakeTerminalWidthPercent {
-                quakeTerminalWidthPercent = normalized
-                return
-            }
-            scheduleSave()
-        }
-    }
-
-    var quakeTerminalHeightPercent = SettingsStore.defaultExport.quakeTerminalHeightPercent {
-        didSet {
-            let normalized = QuakeTerminalGeometryPolicy.normalizedDimensionPercent(quakeTerminalHeightPercent)
-            if normalized != quakeTerminalHeightPercent {
-                quakeTerminalHeightPercent = normalized
-                return
-            }
-            scheduleSave()
-        }
-    }
-
-    var quakeTerminalAnimationDuration = SettingsStore.defaultExport.quakeTerminalAnimationDuration {
-        didSet { scheduleSave() }
-    }
-
-    var quakeTerminalAutoHide = SettingsStore.defaultExport.quakeTerminalAutoHide {
-        didSet { scheduleSave() }
-    }
-
-    var quakeTerminalOpacity = SettingsStore.defaultExport.quakeTerminalOpacity ?? 1.0 {
-        didSet { scheduleSave() }
-    }
-
-    var quakeTerminalMonitorMode = QuakeTerminalMonitorMode(
-        rawValue: SettingsStore.defaultExport.quakeTerminalMonitorMode ?? ""
-    ) ?? .focusedWindow {
-        didSet { scheduleSave() }
-    }
-
-    var quakeTerminalUseCustomFrame = RuntimeStateStore.defaultQuakeTerminalUseCustomFrame {
-        didSet {
-            if !quakeTerminalUseCustomFrame, quakeTerminalCustomFrameStorage != nil {
-                quakeTerminalCustomFrameStorage = nil
-            }
-            syncQuakeTerminalCustomFrameToRuntimeState()
-        }
-    }
-
-    private var quakeTerminalCustomFrameStorage: NSRect? = nil {
-        didSet { syncQuakeTerminalCustomFrameToRuntimeState() }
-    }
-
-    var quakeTerminalCustomFrame: NSRect? {
-        get { quakeTerminalCustomFrameStorage }
-        set {
-            if let frame = QuakeTerminalGeometryPolicy.normalizedCustomFrame(newValue) {
-                quakeTerminalCustomFrameStorage = frame
-            } else {
-                quakeTerminalCustomFrameStorage = nil
-                quakeTerminalUseCustomFrame = false
-            }
-        }
-    }
-
-    func resetQuakeTerminalCustomFrame() {
-        quakeTerminalUseCustomFrame = false
-        quakeTerminalCustomFrame = nil
-    }
-
     var appearanceMode = AppearanceMode(
         rawValue: SettingsStore.defaultExport.appearanceMode
     ) ?? .dark {
@@ -580,14 +500,6 @@ final class SettingsStore {
             clipboardMaxItems: clipboardMaxItems,
             clipboardMaxItemBytes: clipboardMaxItemBytes,
             clipboardMaxTotalBytes: clipboardMaxTotalBytes,
-            quakeTerminalEnabled: quakeTerminalEnabled,
-            quakeTerminalPosition: quakeTerminalPosition.rawValue,
-            quakeTerminalWidthPercent: quakeTerminalWidthPercent,
-            quakeTerminalHeightPercent: quakeTerminalHeightPercent,
-            quakeTerminalAnimationDuration: quakeTerminalAnimationDuration,
-            quakeTerminalAutoHide: quakeTerminalAutoHide,
-            quakeTerminalOpacity: quakeTerminalOpacity,
-            quakeTerminalMonitorMode: quakeTerminalMonitorMode.rawValue,
             appearanceMode: appearanceMode.rawValue,
             capabilityOverrides: []
         )
@@ -694,17 +606,6 @@ final class SettingsStore {
         clipboardMaxItems = export.clipboardMaxItems
         clipboardMaxItemBytes = export.clipboardMaxItemBytes
         clipboardMaxTotalBytes = export.clipboardMaxTotalBytes
-
-        quakeTerminalEnabled = export.quakeTerminalEnabled
-        quakeTerminalPosition = QuakeTerminalPosition(rawValue: export.quakeTerminalPosition) ?? .center
-        quakeTerminalWidthPercent = QuakeTerminalGeometryPolicy.normalizedDimensionPercent(export.quakeTerminalWidthPercent)
-        quakeTerminalHeightPercent = QuakeTerminalGeometryPolicy.normalizedDimensionPercent(export.quakeTerminalHeightPercent)
-        quakeTerminalAnimationDuration = export.quakeTerminalAnimationDuration
-        quakeTerminalAutoHide = export.quakeTerminalAutoHide
-        quakeTerminalOpacity = export.quakeTerminalOpacity ?? baseline.quakeTerminalOpacity ?? 1.0
-        quakeTerminalMonitorMode = QuakeTerminalMonitorMode(
-            rawValue: export.quakeTerminalMonitorMode ?? baseline.quakeTerminalMonitorMode ?? ""
-        ) ?? .focusedWindow
 
         appearanceMode = AppearanceMode(rawValue: export.appearanceMode) ?? .dark
     }

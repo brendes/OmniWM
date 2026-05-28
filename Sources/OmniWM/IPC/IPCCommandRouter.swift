@@ -191,8 +191,6 @@ final class IPCCommandRouter {
             return controller.commandHandler.performCommand(.toggleNativeFullscreen)
         case .toggleOverview:
             return controller.commandHandler.performCommand(.toggleOverview)
-        case .toggleQuakeTerminal:
-            return controller.commandHandler.performCommand(.toggleQuakeTerminal)
         case .toggleWorkspaceBar:
             return controller.commandHandler.performCommand(.toggleWorkspaceBarVisibility)
         case .toggleHiddenBar:

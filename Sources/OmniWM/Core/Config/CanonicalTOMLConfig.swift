@@ -16,7 +16,6 @@ struct CanonicalTOMLConfig: Codable, Equatable {
     var gestures: Gestures
     var statusBar: StatusBar
     var clipboard: Clipboard
-    var quakeTerminal: QuakeTerminal
     var appearance: Appearance
     var hotkeys: [HotkeyBinding]
     var workspaces: [WorkspaceConfiguration]
@@ -162,17 +161,6 @@ struct CanonicalTOMLConfig: Codable, Equatable {
         var maxTotalBytes: Int
     }
 
-    struct QuakeTerminal: Codable, Equatable {
-        var enabled: Bool
-        var position: String
-        var widthPercent: Double
-        var heightPercent: Double
-        var animationDuration: Double
-        var autoHide: Bool
-        var opacity: Double?
-        var monitorMode: String?
-    }
-
     struct Appearance: Codable, Equatable {
         var mode: String
     }
@@ -239,12 +227,6 @@ extension CanonicalTOMLConfig {
         gestures = try container.decode(Gestures.self, forKey: .gestures, default: defaults.gestures, recovering: recovering)
         statusBar = try container.decode(StatusBar.self, forKey: .statusBar, default: defaults.statusBar, recovering: recovering)
         clipboard = try container.decode(Clipboard.self, forKey: .clipboard, default: defaults.clipboard, recovering: recovering)
-        quakeTerminal = try container.decode(
-            QuakeTerminal.self,
-            forKey: .quakeTerminal,
-            default: defaults.quakeTerminal,
-            recovering: recovering
-        )
         appearance = try container.decode(Appearance.self, forKey: .appearance, default: defaults.appearance, recovering: recovering)
         hotkeys = try container.decode([HotkeyBinding].self, forKey: .hotkeys, default: defaults.hotkeys, recovering: recovering)
         workspaces = try container.decode(
@@ -560,28 +542,6 @@ extension CanonicalTOMLConfig.Clipboard {
     }
 }
 
-extension CanonicalTOMLConfig.QuakeTerminal {
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let recovering = decoder.recoversMissingSettingsTOMLKeys
-        let defaults = CanonicalTOMLConfig.recoveryDefaults().quakeTerminal
-
-        enabled = try container.decode(Bool.self, forKey: .enabled, default: defaults.enabled, recovering: recovering)
-        position = try container.decode(String.self, forKey: .position, default: defaults.position, recovering: recovering)
-        widthPercent = try container.decode(Double.self, forKey: .widthPercent, default: defaults.widthPercent, recovering: recovering)
-        heightPercent = try container.decode(Double.self, forKey: .heightPercent, default: defaults.heightPercent, recovering: recovering)
-        animationDuration = try container.decode(
-            Double.self,
-            forKey: .animationDuration,
-            default: defaults.animationDuration,
-            recovering: recovering
-        )
-        autoHide = try container.decode(Bool.self, forKey: .autoHide, default: defaults.autoHide, recovering: recovering)
-        opacity = try container.decodeIfPresent(Double.self, forKey: .opacity)
-        monitorMode = try container.decodeIfPresent(String.self, forKey: .monitorMode)
-    }
-}
-
 extension CanonicalTOMLConfig.Appearance {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -689,16 +649,6 @@ extension CanonicalTOMLConfig {
             maxItemBytes: export.clipboardMaxItemBytes,
             maxTotalBytes: export.clipboardMaxTotalBytes
         )
-        quakeTerminal = QuakeTerminal(
-            enabled: export.quakeTerminalEnabled,
-            position: export.quakeTerminalPosition,
-            widthPercent: export.quakeTerminalWidthPercent,
-            heightPercent: export.quakeTerminalHeightPercent,
-            animationDuration: export.quakeTerminalAnimationDuration,
-            autoHide: export.quakeTerminalAutoHide,
-            opacity: export.quakeTerminalOpacity,
-            monitorMode: export.quakeTerminalMonitorMode
-        )
         appearance = Appearance(mode: export.appearanceMode)
         hotkeys = export.hotkeyBindings
         workspaces = export.workspaceConfigurations
@@ -787,14 +737,6 @@ extension CanonicalTOMLConfig {
             clipboardMaxItems: clipboard.maxItems,
             clipboardMaxItemBytes: clipboard.maxItemBytes,
             clipboardMaxTotalBytes: clipboard.maxTotalBytes,
-            quakeTerminalEnabled: quakeTerminal.enabled,
-            quakeTerminalPosition: quakeTerminal.position,
-            quakeTerminalWidthPercent: quakeTerminal.widthPercent,
-            quakeTerminalHeightPercent: quakeTerminal.heightPercent,
-            quakeTerminalAnimationDuration: quakeTerminal.animationDuration,
-            quakeTerminalAutoHide: quakeTerminal.autoHide,
-            quakeTerminalOpacity: quakeTerminal.opacity,
-            quakeTerminalMonitorMode: quakeTerminal.monitorMode,
             appearanceMode: appearance.mode
         )
     }
