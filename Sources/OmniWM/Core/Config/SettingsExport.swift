@@ -92,11 +92,6 @@ struct SettingsExport: Equatable {
     var statusBarUseWorkspaceId: Bool
     var animationsEnabled: Bool
 
-    var clipboardHistoryEnabled: Bool
-    var clipboardMaxItems: Int
-    var clipboardMaxItemBytes: Int
-    var clipboardMaxTotalBytes: Int
-
     var appearanceMode: String
 
     var capabilityOverrides: [WindowCapabilityProfileTOMLOverride] = []
@@ -179,10 +174,6 @@ extension SettingsExport {
             statusBarShowAppNames: false,
             statusBarUseWorkspaceId: false,
             animationsEnabled: true,
-            clipboardHistoryEnabled: false,
-            clipboardMaxItems: 200,
-            clipboardMaxItemBytes: 8_388_608,
-            clipboardMaxTotalBytes: 67_108_864,
             appearanceMode: AppearanceMode.dark.rawValue,
             capabilityOverrides: []
         )

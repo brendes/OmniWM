@@ -63,7 +63,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let controller = WMController(
             settings: settings,
             hiddenBarController: hiddenBarController,
-            clipboardHistoryDirectory: storagePaths.stateDirectory
         )
         controller.applyPersistedSettings(settings)
         let cliManager = AppCLIManager()

@@ -15,7 +15,6 @@ struct CanonicalTOMLConfig: Codable, Equatable {
     var workspaceBar: WorkspaceBar
     var gestures: Gestures
     var statusBar: StatusBar
-    var clipboard: Clipboard
     var appearance: Appearance
     var hotkeys: [HotkeyBinding]
     var workspaces: [WorkspaceConfiguration]
@@ -154,13 +153,6 @@ struct CanonicalTOMLConfig: Codable, Equatable {
         var useWorkspaceId: Bool
     }
 
-    struct Clipboard: Codable, Equatable {
-        var historyEnabled: Bool
-        var maxItems: Int
-        var maxItemBytes: Int
-        var maxTotalBytes: Int
-    }
-
     struct Appearance: Codable, Equatable {
         var mode: String
     }
@@ -226,7 +218,6 @@ extension CanonicalTOMLConfig {
         )
         gestures = try container.decode(Gestures.self, forKey: .gestures, default: defaults.gestures, recovering: recovering)
         statusBar = try container.decode(StatusBar.self, forKey: .statusBar, default: defaults.statusBar, recovering: recovering)
-        clipboard = try container.decode(Clipboard.self, forKey: .clipboard, default: defaults.clipboard, recovering: recovering)
         appearance = try container.decode(Appearance.self, forKey: .appearance, default: defaults.appearance, recovering: recovering)
         hotkeys = try container.decode([HotkeyBinding].self, forKey: .hotkeys, default: defaults.hotkeys, recovering: recovering)
         workspaces = try container.decode(
@@ -529,19 +520,6 @@ extension CanonicalTOMLConfig.StatusBar {
     }
 }
 
-extension CanonicalTOMLConfig.Clipboard {
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let recovering = decoder.recoversMissingSettingsTOMLKeys
-        let defaults = CanonicalTOMLConfig.recoveryDefaults().clipboard
-
-        historyEnabled = try container.decode(Bool.self, forKey: .historyEnabled, default: defaults.historyEnabled, recovering: recovering)
-        maxItems = try container.decode(Int.self, forKey: .maxItems, default: defaults.maxItems, recovering: recovering)
-        maxItemBytes = try container.decode(Int.self, forKey: .maxItemBytes, default: defaults.maxItemBytes, recovering: recovering)
-        maxTotalBytes = try container.decode(Int.self, forKey: .maxTotalBytes, default: defaults.maxTotalBytes, recovering: recovering)
-    }
-}
-
 extension CanonicalTOMLConfig.Appearance {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -643,12 +621,6 @@ extension CanonicalTOMLConfig {
             showAppNames: export.statusBarShowAppNames,
             useWorkspaceId: export.statusBarUseWorkspaceId
         )
-        clipboard = Clipboard(
-            historyEnabled: export.clipboardHistoryEnabled,
-            maxItems: export.clipboardMaxItems,
-            maxItemBytes: export.clipboardMaxItemBytes,
-            maxTotalBytes: export.clipboardMaxTotalBytes
-        )
         appearance = Appearance(mode: export.appearanceMode)
         hotkeys = export.hotkeyBindings
         workspaces = export.workspaceConfigurations
@@ -733,10 +705,6 @@ extension CanonicalTOMLConfig {
             statusBarShowAppNames: statusBar.showAppNames,
             statusBarUseWorkspaceId: statusBar.useWorkspaceId,
             animationsEnabled: general.animationsEnabled,
-            clipboardHistoryEnabled: clipboard.historyEnabled,
-            clipboardMaxItems: clipboard.maxItems,
-            clipboardMaxItemBytes: clipboard.maxItemBytes,
-            clipboardMaxTotalBytes: clipboard.maxTotalBytes,
             appearanceMode: appearance.mode
         )
     }

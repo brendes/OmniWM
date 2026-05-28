@@ -161,8 +161,6 @@ final class WMController {
         orderWindow: windowFocusOperations.orderWindow
     )
     @ObservationIgnored
-    private lazy var clipboardHistoryService = ClipboardHistoryService(configuration: clipboardHistoryConfiguration())
-    @ObservationIgnored
     private(set) lazy var focusNotificationDispatcher = FocusNotificationDispatcher(controller: self)
     @ObservationIgnored
     var hasStartedServices = false
@@ -181,20 +179,17 @@ final class WMController {
 
     let animationClock = AnimationClock()
     let motionPolicy: MotionPolicy
-    private let clipboardHistoryDirectory: URL
     private let windowFocusOperations: WindowFocusOperations
     weak var statusBarController: StatusBarController?
 
     init(
         settings: SettingsStore,
         hiddenBarController: HiddenBarController? = nil,
-        clipboardHistoryDirectory: URL = OmniWMStoragePaths.live.stateDirectory,
         windowFocusOperations: WindowFocusOperations = .live
     ) {
         self.settings = settings
         motionPolicy = MotionPolicy(animationsEnabled: settings.animationsEnabled)
         self.hiddenBarController = hiddenBarController ?? HiddenBarController(settings: settings)
-        self.clipboardHistoryDirectory = clipboardHistoryDirectory
         self.windowFocusOperations = windowFocusOperations
         workspaceManager = WorkspaceManager(settings: settings)
         focusBridge = FocusBridgeCoordinator()
@@ -293,7 +288,6 @@ final class WMController {
 
         setWorkspaceBarEnabled(settings.workspaceBarEnabled)
         setPreventSleepEnabled(settings.preventSleepEnabled)
-        syncClipboardHistoryService()
 
         // External edits to settings.toml otherwise stop here at refreshStatusBar
         // and skip subsystems that read settings only at trigger time. Push the
@@ -2303,41 +2297,6 @@ final class WMController {
 
     func openCommandPalette() {
         commandPaletteController.toggle(wmController: self)
-    }
-
-    func clipboardPaletteItems() -> [ClipboardPaletteItem] {
-        clipboardHistoryService.paletteItems
-    }
-
-    func setClipboardHistoryEnabled(_ enabled: Bool) {
-        settings.clipboardHistoryEnabled = enabled
-        syncClipboardHistoryService()
-    }
-
-    func copyClipboardItem(id: UUID) async -> Bool {
-        await clipboardHistoryService.copyItemToPasteboard(id: id)
-    }
-
-    func deleteClipboardItem(id: UUID) async -> [ClipboardPaletteItem] {
-        await clipboardHistoryService.deleteItem(id: id)
-    }
-
-    func clearClipboardHistory() async -> [ClipboardPaletteItem] {
-        await clipboardHistoryService.clearHistory()
-    }
-
-    private func syncClipboardHistoryService() {
-        clipboardHistoryService.updateConfiguration(clipboardHistoryConfiguration())
-    }
-
-    func clipboardHistoryConfiguration() -> ClipboardHistoryConfiguration {
-        ClipboardHistoryConfiguration(
-            isEnabled: settings.clipboardHistoryEnabled,
-            maxItems: settings.clipboardMaxItems,
-            maxItemBytes: settings.clipboardMaxItemBytes,
-            maxTotalBytes: settings.clipboardMaxTotalBytes,
-            storageDirectory: clipboardHistoryDirectory
-        )
     }
 
     func openSponsorsWindow() {

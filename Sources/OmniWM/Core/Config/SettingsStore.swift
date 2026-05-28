@@ -342,22 +342,6 @@ final class SettingsStore {
         didSet { scheduleSave() }
     }
 
-    var clipboardHistoryEnabled = SettingsStore.defaultExport.clipboardHistoryEnabled {
-        didSet { scheduleSave() }
-    }
-
-    var clipboardMaxItems = SettingsStore.defaultExport.clipboardMaxItems {
-        didSet { scheduleSave() }
-    }
-
-    var clipboardMaxItemBytes = SettingsStore.defaultExport.clipboardMaxItemBytes {
-        didSet { scheduleSave() }
-    }
-
-    var clipboardMaxTotalBytes = SettingsStore.defaultExport.clipboardMaxTotalBytes {
-        didSet { scheduleSave() }
-    }
-
     var hiddenBarIsCollapsed = RuntimeStateStore.defaultHiddenBarIsCollapsed {
         didSet { runtimeState.hiddenBarIsCollapsed = hiddenBarIsCollapsed }
     }
@@ -388,12 +372,6 @@ final class SettingsStore {
         commandPaletteLastMode = runtimeState.commandPaletteLastMode
         hiddenBarIsCollapsed = runtimeState.hiddenBarIsCollapsed
         isApplyingRuntimeState = true
-        quakeTerminalCustomFrameStorage = QuakeTerminalGeometryPolicy.normalizedCustomFrame(
-            runtimeState.quakeTerminalCustomFrame
-        )
-        quakeTerminalUseCustomFrame = runtimeState.quakeTerminalUseCustomFrame && quakeTerminalCustomFrameStorage != nil
-        isApplyingRuntimeState = false
-        syncQuakeTerminalCustomFrameToRuntimeState()
 
         applyExport(
             persistence.load(),
@@ -496,10 +474,6 @@ final class SettingsStore {
             statusBarShowAppNames: statusBarShowAppNames,
             statusBarUseWorkspaceId: statusBarUseWorkspaceId,
             animationsEnabled: animationsEnabled,
-            clipboardHistoryEnabled: clipboardHistoryEnabled,
-            clipboardMaxItems: clipboardMaxItems,
-            clipboardMaxItemBytes: clipboardMaxItemBytes,
-            clipboardMaxTotalBytes: clipboardMaxTotalBytes,
             appearanceMode: appearanceMode.rawValue,
             capabilityOverrides: []
         )
@@ -602,23 +576,7 @@ final class SettingsStore {
         statusBarShowAppNames = export.statusBarShowAppNames
         statusBarUseWorkspaceId = export.statusBarUseWorkspaceId
         animationsEnabled = export.animationsEnabled
-        clipboardHistoryEnabled = export.clipboardHistoryEnabled
-        clipboardMaxItems = export.clipboardMaxItems
-        clipboardMaxItemBytes = export.clipboardMaxItemBytes
-        clipboardMaxTotalBytes = export.clipboardMaxTotalBytes
-
         appearanceMode = AppearanceMode(rawValue: export.appearanceMode) ?? .dark
-    }
-
-    private func syncQuakeTerminalCustomFrameToRuntimeState() {
-        guard !isApplyingRuntimeState else { return }
-        if let quakeTerminalCustomFrameStorage, quakeTerminalUseCustomFrame {
-            runtimeState.quakeTerminalCustomFrame = quakeTerminalCustomFrameStorage
-            runtimeState.quakeTerminalUseCustomFrame = true
-        } else {
-            runtimeState.quakeTerminalUseCustomFrame = false
-            runtimeState.quakeTerminalCustomFrame = nil
-        }
     }
 
     private func handleExternalReload(_ export: SettingsExport) {
