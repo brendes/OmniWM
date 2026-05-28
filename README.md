@@ -143,7 +143,6 @@
 </p>
 
 Small demo, not fully showing everything, gif recorded at 30fps due to size, some stuff is now more refined and better as soem gifs might be outdated, features shown:
-- Real quake/sticky terminal using ghostty's libghostty
 - Best-effort macOS native-tab replacement support
 - IPC/CLI
 - Scrathpad/Sticky windows of any app
@@ -287,7 +286,6 @@ Layout legend:
 | Open Menu Anywhere | `Control + Option + M` | `Shared` |
 | Toggle Workspace Bar | `Unassigned` | `Shared` |
 | Toggle Hidden Bar | `Unassigned` | `Shared` |
-| Toggle Quake Terminal | `` Option + ` `` | `Shared` |
 | Toggle Overview | `Option + Shift + O` | `Shared` |
 
 #### Move Window
@@ -336,34 +334,7 @@ Layout legend:
 
 In Niri, `Move Left / Right` expels the focused window out of multi-window columns or consumes a single-window column into the adjacent column. `Move Up / Down` keeps the current in-column reorder behavior.
 
-#### Quake Terminal (Inside Terminal)
-
-| Action | Shortcut |
-|--------|----------|
-| New Tab | `Cmd + T` |
-| Close Tab | `Cmd + W` |
-| Next Tab | `Cmd + Shift + ]` |
-| Previous Tab | `Cmd + Shift + [` |
-| Next Tab (Alt) | `Ctrl + Tab` |
-| Previous Tab (Alt) | `Ctrl + Shift + Tab` |
-| Select Tab 1-9 | `Cmd + 1-9` |
-| Split Pane (Horizontal) | `Cmd + D` |
-| Split Pane (Vertical) | `Cmd + Shift + D` |
-| Close Pane | `Cmd + Shift + W` |
-| Equalize Splits | `Cmd + Shift + =` |
-| Navigate Pane | `Cmd + Option + Arrow Keys` |
-
 ### Features
-
-#### Quake Terminal
-
-A true quake/sticky terminal (powered by Ghostty's libghostty) that slides in from the screen edge and:
-- Toggle it from the global shortcut shown in `Keyboard Shortcuts`
-- Supports multiple tabs and splits within tabs
-- Tab and pane shortcuts are listed in **Quake Terminal (Inside Terminal)**
-- Mouse resize by dragging edges; `Option + drag` to move (remembers size/position per monitor)
-- Configure position (top/bottom/left/right/center), size, and opacity in Settings
-- Auto-hides on focus loss (optional)
 
 #### Command Palette
 
