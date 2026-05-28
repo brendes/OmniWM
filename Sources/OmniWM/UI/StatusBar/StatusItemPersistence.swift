@@ -5,11 +5,14 @@ enum StatusItemPersistence {
     enum OwnedItem: CaseIterable {
         case main
         case hiddenBarSeparator
+        case hiddenBarToggle
 
         var autosaveName: String {
             switch self {
             case .main:
                 "omniwm_main"
+            case .hiddenBarToggle:
+                "omniwm_hiddenbar_toggle"
             case .hiddenBarSeparator:
                 "omniwm_hiddenbar_separator"
             }

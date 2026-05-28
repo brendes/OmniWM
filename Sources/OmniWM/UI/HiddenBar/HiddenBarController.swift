@@ -3,11 +3,13 @@ import AppKit
 @MainActor
 final class HiddenBarController {
     nonisolated static let separatorAutosaveName = StatusItemPersistence.OwnedItem.hiddenBarSeparator.autosaveName
+    nonisolated static let toggleAutosaveName = StatusItemPersistence.OwnedItem.hiddenBarToggle.autosaveName
 
     private let settings: SettingsStore
 
     private weak var omniButton: NSStatusBarButton?
     private var separatorItem: NSStatusItem?
+    private var toggleItem: NSStatusItem?
     private var collapseLength: CGFloat = HiddenBarController.boundedCollapseLength(screenWidth: nil)
     private var collapseSafetyOverrideForTests: CollapseSafety?
     private var hasAttemptedRuntimeRepairThisLaunch = false
@@ -15,6 +17,7 @@ final class HiddenBarController {
     private var screenParametersObserver: NSObjectProtocol?
 
     private let separatorLength: CGFloat = 8
+    private let toggleLength: CGFloat = 24
 
     private var isToggling = false
 
@@ -43,6 +46,7 @@ final class HiddenBarController {
         layoutDirection: NSUserInterfaceLayoutDirection
     ) -> Bool {
         collapseSafety(
+            toggleMinX: nil,
             omniMinX: omniMinX,
             separatorMinX: separatorMinX,
             layoutDirection: layoutDirection
@@ -50,6 +54,7 @@ final class HiddenBarController {
     }
 
     private nonisolated static func collapseSafety(
+        toggleMinX: CGFloat?,
         omniMinX: CGFloat?,
         separatorMinX: CGFloat?,
         layoutDirection: NSUserInterfaceLayoutDirection
@@ -57,9 +62,13 @@ final class HiddenBarController {
         guard let omniMinX, let separatorMinX else { return .unknown }
         switch layoutDirection {
         case .rightToLeft:
-            return omniMinX <= separatorMinX ? .safe : .unsafe
+            guard omniMinX <= separatorMinX else { return .unsafe }
+            if let toggleMinX, toggleMinX > separatorMinX { return .unsafe }
+            return .safe
         default:
-            return omniMinX >= separatorMinX ? .safe : .unsafe
+            guard omniMinX >= separatorMinX else { return .unsafe }
+            if let toggleMinX, toggleMinX < separatorMinX { return .unsafe }
+            return .safe
         }
     }
 
@@ -72,10 +81,22 @@ final class HiddenBarController {
     func setup() {
         guard separatorItem == nil else { return }
 
+        // Two owned items: a fixed-width clickable toggle and an expanding
+        // separator. On collapse the separator expands to push items into
+        // overflow; the toggle and main item must sit on the surviving side to
+        // stay visible. Required order is not enforced automatically: if the
+        // user drags them into an unsafe arrangement, collapseSafety refuses
+        // and the repair path rebuilds.
+        let ownedToggleItem = NSStatusBar.system.statusItem(withLength: toggleLength)
+        StatusItemPersistence.configureMandatoryItem(ownedToggleItem, as: .hiddenBarToggle)
+        toggleItem = ownedToggleItem
+        setupToggle()
+
         let ownedSeparatorItem = NSStatusBar.system.statusItem(withLength: separatorLength)
         StatusItemPersistence.configureMandatoryItem(ownedSeparatorItem, as: .hiddenBarSeparator)
         separatorItem = ownedSeparatorItem
         setupSeparator()
+
         installScreenParametersObserverIfNeeded()
         updateCollapseLength()
 
@@ -84,6 +105,19 @@ final class HiddenBarController {
                 self?.collapse()
             }
         }
+    }
+
+    private func setupToggle() {
+        guard let button = toggleItem?.button else { return }
+        button.image = NSImage(systemSymbolName: "chevron.left", accessibilityDescription: "Toggle Hidden Bar")
+        button.image?.isTemplate = true
+        button.target = self
+        button.action = #selector(toggleClicked)
+        button.sendAction(on: [.leftMouseUp])
+    }
+
+    @objc private func toggleClicked() {
+        toggle()
     }
 
     private func setupSeparator() {
@@ -136,6 +170,10 @@ final class HiddenBarController {
             NSStatusBar.system.removeStatusItem(item)
             separatorItem = nil
         }
+        if let item = toggleItem {
+            NSStatusBar.system.removeStatusItem(item)
+            toggleItem = nil
+        }
         omniButton = nil
         onUnsafeOrderingDetected = nil
     }
@@ -157,11 +195,13 @@ final class HiddenBarController {
     }
 
     func setCollapseSafetyForTests(
+        toggleMinX: CGFloat? = nil,
         omniMinX: CGFloat?,
         separatorMinX: CGFloat?,
         layoutDirection: NSUserInterfaceLayoutDirection
     ) {
         collapseSafetyOverrideForTests = Self.collapseSafety(
+            toggleMinX: toggleMinX,
             omniMinX: omniMinX,
             separatorMinX: separatorMinX,
             layoutDirection: layoutDirection
@@ -204,6 +244,7 @@ final class HiddenBarController {
 
         let layoutDirection = NSApp?.userInterfaceLayoutDirection ?? .leftToRight
         return Self.collapseSafety(
+            toggleMinX: toggleItem?.button?.window?.frame.minX,
             omniMinX: omniButton?.window?.frame.minX,
             separatorMinX: separatorItem?.button?.window?.frame.minX,
             layoutDirection: layoutDirection
