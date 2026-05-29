@@ -121,4 +121,5 @@ struct ResolvedBarSettings {
     let yOffset: Double
     let accentColor: SettingsColor?
     let textColor: SettingsColor?
+    let borderColor: SettingsColor?
 }

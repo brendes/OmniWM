@@ -62,6 +62,7 @@ struct SettingsExport: Equatable {
     var workspaceBarYOffset: Double
     var workspaceBarAccentColor: SettingsColor?
     var workspaceBarTextColor: SettingsColor?
+    var workspaceBarBorderColor: SettingsColor?
     var workspaceBarLabelFontSize: Double
     var monitorBarSettings: [MonitorBarSettings]
 
@@ -147,6 +148,7 @@ extension SettingsExport {
             workspaceBarYOffset: 0.0,
             workspaceBarAccentColor: nil,
             workspaceBarTextColor: nil,
+            workspaceBarBorderColor: nil,
             workspaceBarLabelFontSize: 12,
             monitorBarSettings: [],
             appRules: BuiltInSettingsDefaults.appRules,

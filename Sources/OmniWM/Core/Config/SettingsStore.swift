@@ -226,6 +226,10 @@ final class SettingsStore {
         didSet { scheduleSave() }
     }
 
+    var workspaceBarBorderColor = SettingsStore.defaultExport.workspaceBarBorderColor {
+        didSet { scheduleSave() }
+    }
+
     var monitorBarSettings = SettingsStore.defaultExport.monitorBarSettings {
         didSet { scheduleSave() }
     }
@@ -444,6 +448,7 @@ final class SettingsStore {
             workspaceBarYOffset: workspaceBarYOffset,
             workspaceBarAccentColor: workspaceBarAccentColor,
             workspaceBarTextColor: workspaceBarTextColor,
+            workspaceBarBorderColor: workspaceBarBorderColor,
             workspaceBarLabelFontSize: 12,
             monitorBarSettings: monitorBarSettings,
             appRules: appRules,
@@ -535,6 +540,7 @@ final class SettingsStore {
         workspaceBarYOffset = export.workspaceBarYOffset
         workspaceBarAccentColor = export.workspaceBarAccentColor
         workspaceBarTextColor = export.workspaceBarTextColor
+        workspaceBarBorderColor = export.workspaceBarBorderColor
         monitorBarSettings = SettingsStore.reboundMonitorSettings(export.monitorBarSettings, monitors: monitors)
 
         appRules = export.appRules
@@ -820,7 +826,8 @@ final class SettingsStore {
             xOffset: override?.xOffset ?? workspaceBarXOffset,
             yOffset: override?.yOffset ?? workspaceBarYOffset,
             accentColor: workspaceBarAccentColor,
-            textColor: workspaceBarTextColor
+            textColor: workspaceBarTextColor,
+            borderColor: workspaceBarBorderColor
         )
     }
 

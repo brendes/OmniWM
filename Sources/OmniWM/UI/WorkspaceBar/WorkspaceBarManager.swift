@@ -333,7 +333,8 @@ final class WorkspaceBarManager {
             backgroundOpacity: current.backgroundOpacity,
             barHeight: current.barHeight,
             accentColor: resolved.accentColor,
-            textColor: resolved.textColor
+            textColor: resolved.textColor,
+            borderColor: resolved.borderColor
         )
 
         if snapshot != current {
@@ -404,7 +405,8 @@ final class WorkspaceBarManager {
             backgroundOpacity: resolved.backgroundOpacity,
             barHeight: geometry.barHeight,
             accentColor: resolved.accentColor,
-            textColor: resolved.textColor
+            textColor: resolved.textColor,
+            borderColor: resolved.borderColor
         )
     }
 

@@ -66,6 +66,7 @@ struct WorkspaceBarSnapshot: Equatable {
     let barHeight: CGFloat
     let accentColor: SettingsColor?
     let textColor: SettingsColor?
+    let borderColor: SettingsColor?
 
     var items: [WorkspaceBarItem] {
         projection.items
@@ -163,6 +164,10 @@ private struct WorkspaceBarContentView: View {
         snapshot.textColor?.swiftUIColor
     }
 
+    private var borderColor: Color? {
+        snapshot.borderColor?.swiftUIColor
+    }
+
     private var barShape: RoundedRectangle {
         RoundedRectangle(cornerRadius: 8, style: .continuous)
     }
@@ -209,9 +214,9 @@ private struct WorkspaceBarContentView: View {
             }
 
             barShape.strokeBorder(
-                colorSchemeContrast == .increased
+                borderColor ?? (colorSchemeContrast == .increased
                     ? Color.primary.opacity(0.45)
-                    : Color.secondary.opacity(0.18),
+                    : Color.secondary.opacity(0.18)),
                 lineWidth: colorSchemeContrast == .increased ? 1 : 0.5
             )
         }
