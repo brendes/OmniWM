@@ -90,6 +90,23 @@ struct CanonicalTOMLConfig: Codable, Equatable {
             var green: Double
             var blue: Double
             var alpha: Double
+
+            init(red: Double, green: Double, blue: Double, alpha: Double) {
+                self.red = red
+                self.green = green
+                self.blue = blue
+                self.alpha = alpha
+            }
+
+            init(from decoder: Decoder) throws {
+                let rgba = try decodeColorRGBA(from: decoder)
+                self.init(red: rgba.red, green: rgba.green, blue: rgba.blue, alpha: rgba.alpha)
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.singleValueContainer()
+                try container.encode(colorHexString(red: red, green: green, blue: blue, alpha: alpha))
+            }
         }
     }
 
@@ -110,6 +127,7 @@ struct CanonicalTOMLConfig: Codable, Equatable {
         var labelFontSize: Double
         var accentColor: Color?
         var textColor: Color?
+        var borderColor: Color?
 
         struct Color: Codable, Equatable {
             var red: Double
@@ -133,6 +151,16 @@ struct CanonicalTOMLConfig: Codable, Equatable {
 
             var settingsColor: SettingsColor {
                 SettingsColor(red: red, green: green, blue: blue, alpha: alpha)
+            }
+
+            init(from decoder: Decoder) throws {
+                let rgba = try decodeColorRGBA(from: decoder)
+                self.init(red: rgba.red, green: rgba.green, blue: rgba.blue, alpha: rgba.alpha)
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.singleValueContainer()
+                try container.encode(colorHexString(red: red, green: green, blue: blue, alpha: alpha))
             }
         }
     }
@@ -402,19 +430,6 @@ extension CanonicalTOMLConfig.Borders {
     }
 }
 
-extension CanonicalTOMLConfig.Borders.Color {
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let recovering = decoder.recoversMissingSettingsTOMLKeys
-        let defaults = CanonicalTOMLConfig.recoveryDefaults().borders.color
-
-        red = try container.decode(Double.self, forKey: .red, default: defaults.red, recovering: recovering)
-        green = try container.decode(Double.self, forKey: .green, default: defaults.green, recovering: recovering)
-        blue = try container.decode(Double.self, forKey: .blue, default: defaults.blue, recovering: recovering)
-        alpha = try container.decode(Double.self, forKey: .alpha, default: defaults.alpha, recovering: recovering)
-    }
-}
-
 extension CanonicalTOMLConfig.WorkspaceBar {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -474,6 +489,15 @@ extension CanonicalTOMLConfig.WorkspaceBar {
         } catch {
             if recovering {
                 textColor = nil
+            } else {
+                throw error
+            }
+        }
+        do {
+            borderColor = try container.decodeIfPresent(Color.self, forKey: .borderColor)
+        } catch {
+            if recovering {
+                borderColor = nil
             } else {
                 throw error
             }
@@ -598,7 +622,8 @@ extension CanonicalTOMLConfig {
             yOffset: export.workspaceBarYOffset,
             labelFontSize: export.workspaceBarLabelFontSize,
             accentColor: export.workspaceBarAccentColor.map(WorkspaceBar.Color.init),
-            textColor: export.workspaceBarTextColor.map(WorkspaceBar.Color.init)
+            textColor: export.workspaceBarTextColor.map(WorkspaceBar.Color.init),
+            borderColor: export.workspaceBarBorderColor.map(WorkspaceBar.Color.init)
         )
         gestures = Gestures(
             scrollEnabled: export.scrollGestureEnabled,
@@ -671,6 +696,7 @@ extension CanonicalTOMLConfig {
             workspaceBarYOffset: workspaceBar.yOffset,
             workspaceBarAccentColor: workspaceBar.accentColor?.settingsColor,
             workspaceBarTextColor: workspaceBar.textColor?.settingsColor,
+            workspaceBarBorderColor: workspaceBar.borderColor?.settingsColor,
             workspaceBarLabelFontSize: workspaceBar.labelFontSize,
             monitorBarSettings: monitorBarOverrides,
             appRules: appRules,
@@ -699,4 +725,65 @@ extension CanonicalTOMLConfig {
             appearanceMode: appearance.mode
         )
     }
+}
+
+private func colorChannelByte(_ value: Double) -> Int {
+    // Clamp before rounding; stored Doubles are nominally 0...1 but a stale
+    // sentinel color could be out of range, and a malformed byte must not escape.
+    let clamped = min(max(value, 0), 1)
+    return Int((clamped * 255).rounded())
+}
+
+private func colorHexString(red: Double, green: Double, blue: Double, alpha: Double) -> String {
+    String(
+        format: "#%02X%02X%02X%02X",
+        colorChannelByte(red),
+        colorChannelByte(green),
+        colorChannelByte(blue),
+        colorChannelByte(alpha)
+    )
+}
+
+private struct ColorRGBA {
+    var red: Double
+    var green: Double
+    var blue: Double
+    var alpha: Double
+}
+
+private enum LegacyColorKey: String, CodingKey {
+    case red, green, blue, alpha
+}
+
+private func decodeColorRGBA(from decoder: Decoder) throws -> ColorRGBA {
+    if let single = try? decoder.singleValueContainer(),
+       let hex = try? single.decode(String.self) {
+        return try parseColorHex(hex, decoder: decoder)
+    }
+    // Migration: old red/green/blue/alpha subtable.
+    let container = try decoder.container(keyedBy: LegacyColorKey.self)
+    return ColorRGBA(
+        red: try container.decode(Double.self, forKey: .red),
+        green: try container.decode(Double.self, forKey: .green),
+        blue: try container.decode(Double.self, forKey: .blue),
+        alpha: try container.decode(Double.self, forKey: .alpha)
+    )
+}
+
+private func parseColorHex(_ raw: String, decoder: Decoder) throws -> ColorRGBA {
+    var s = raw
+    if s.hasPrefix("#") { s.removeFirst() }
+    if s.count == 6 { s += "FF" }
+    guard s.count == 8, let value = UInt32(s, radix: 16) else {
+        throw DecodingError.dataCorrupted(
+            DecodingError.Context(
+                codingPath: decoder.codingPath,
+                debugDescription: "Expected color as #RRGGBB or #RRGGBBAA, got \(raw)"
+            )
+        )
+    }
+    func channel(_ shift: UInt32) -> Double {
+        Double((value >> shift) & 0xFF) / 255
+    }
+    return ColorRGBA(red: channel(24), green: channel(16), blue: channel(8), alpha: channel(0))
 }
